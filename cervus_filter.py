@@ -5,6 +5,7 @@ import sys
 import csv
 import argparse
 import itertools
+from pprint import pprint
 
 class Cervus_filter():
 	def __init__(self, infile, genotypes):
@@ -70,13 +71,16 @@ class Cervus_filter():
 				tuples=zip(*target_pairs) ### Creates a tuple of summed values from targets. E.g. Animal_A 1,2 and Animal_B 2,2 becomes Animal_A 3 and Animal_B 4.
 				column=0
 				mismatch_count=0
+				print(sample_names[0] + " == " + sample_names[1])
 				for n in tuples: ### This goes through the tuples
 					column+=2
 					if n[0] == 2 and n[1] == 4 or n[0] == 4 and n[1] == 2:
 						mismatch_count+=1
 						print("Mismatch in target " + target_IDs[column] + " for samples " + sample_names[0] + " and " + sample_names[1])
 				if mismatch_count==0:
-					print("There were no mismatches in samples " + sample_names[0] + " and " + sample_names[1])
+					print("There were no mismatches in samples " + sample_names[0] + " and " + sample_names[1] + "\n")
+				else:
+					print("\n")
 
 
 

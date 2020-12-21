@@ -5,7 +5,6 @@ import sys
 import csv
 import argparse
 import itertools
-from pandas import read_excel
 
 
 class Cervus_filter():

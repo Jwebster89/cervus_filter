@@ -1,5 +1,5 @@
 # cervus_filter
-##Introduction
+## Introduction
 cervus_filter filters cervus output results of parentage analysis to produce a list of positions of mismatches between Offspring and Parent. These positions are then checked for coverage and quality and values reported.
 
 ## Quick Usage

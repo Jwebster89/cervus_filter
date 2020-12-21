@@ -10,7 +10,7 @@ Cervus can be run as follows
 and requires the following files:
 
 ### Genotype file
-The genotype file can be created with [cevrus_parse](https://github.com/bogemad/cervus_parse) and is also the input file used for Cervus.
+The genotype file can be created with [cervus_parse](https://github.com/bogemad/cervus_parse) and is also the input file used for Cervus.
 
 ### cervus_output
 The Cervus output file is that produced by the software Cervus for the analysis of parentage.

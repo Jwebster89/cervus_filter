@@ -100,7 +100,7 @@ def main():
 
 	required.add_argument('-c', '--csv', type=str, required=True, help="Output of Cervus in csv format")
 	required.add_argument('-g', '--genotype', type=str, required=True, help="input of Cervus (output of Cervus_parse)")
-	required.add_argument('-s', '--ion_torrent', type=str, required=True, help="Output of Ion Torrent in csv format")
+	required.add_argument('-s', '--ion_torrent', type=str, required=True, help="Output of Ion Torrent in XLS format")
 	optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
 	
 	args=parser.parse_args()

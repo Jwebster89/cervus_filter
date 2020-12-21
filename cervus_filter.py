@@ -5,18 +5,19 @@ import sys
 import csv
 import argparse
 import itertools
-from pprint import pprint
+from pandas import read_excel
+
 
 class Cervus_filter():
-	def __init__(self, infile, genotypes):
-		self.infile = infile
+	def __init__(self, cervus, genotypes,IT):
+		self.cervus = cervus
 		self.genotypes = genotypes
-		#self.outfile = outfile if os.path.splitext(outfile)[1] == '.csv' else (outfile + '.csv')
+		self.IT = IT
 	
 	
 	def parentage_hits(self):
 		ParentPairs=[]
-		with open(self.infile) as cervus_input:
+		with open(self.cervus) as cervus_input:
 			csv_reader=csv.reader(cervus_input,delimiter=',')
 			next(csv_reader)
 			for row in csv_reader:
@@ -32,17 +33,19 @@ class Cervus_filter():
 					ParentPairs.append(pair2)
 		uniq_pairs=list(ParentPairs for ParentPairs,_ in itertools.groupby(ParentPairs))
 		for pair in uniq_pairs:
-			print("Animals " + pair[0] + " and " + pair[1] + " have a positive LOD score and 3 or less mismatches")
+			print(f"Offspring {pair[0]} and Parent {pair[1]} have a positive LOD score and 3 or less mismatches")
 		print('\n\n')
 		ParentPairs.sort()
 		return(list(ParentPairs for ParentPairs,_ in itertools.groupby(ParentPairs))) # Returns a list of lists of parent/progeny with duplicates removed
 
-	# def print_pairs(self,parentage):
-		# for pairing in parentage:
-			# pair=[]
-			# for animal in pairing:
-				# pair.append(animal)
-			# print("
+	def print_qual_cov(self, sample_id, position):
+		with open(self.IT) as tsv_input:
+			tsv_reader=csv.reader(tsv_input, delimiter="\t")
+			for row in tsv_reader:
+				# (qual, cov)= row[7], row[18] if all(row[-5] == sample_id, row[2] == position):
+				if all([row[-5] == sample_id, str(row[1]) == str(position)]):
+					(qual, cov)= row[7], row[18]
+					print(f"Coverage = {cov} and Quality = {qual} for target {position} in sample {sample_id}")
 
 	def find_mismatches(self,parentage):
 		with open(self.genotypes) as csv_input:
@@ -71,22 +74,24 @@ class Cervus_filter():
 				tuples=zip(*target_pairs) ### Creates a tuple of summed values from targets. E.g. Animal_A 1,2 and Animal_B 2,2 becomes Animal_A 3 and Animal_B 4.
 				column=0
 				mismatch_count=0
-				print(sample_names[0] + " == " + sample_names[1])
+				print(f"[Offspring] {sample_names[0]} == {sample_names[1]} [Parent]")
 				for n in tuples: ### This goes through the tuples
 					column+=2
 					if n[0] == 2 and n[1] == 4 or n[0] == 4 and n[1] == 2:
 						mismatch_count+=1
-						print("Mismatch in target " + target_IDs[column] + " for samples " + sample_names[0] + " and " + sample_names[1])
+						print(f"Mismatch in target {target_IDs[column]} for samples {sample_names[0]} and {sample_names[1]}")
+						self.print_qual_cov(sample_names[0],target_IDs[column])
+						self.print_qual_cov(sample_names[1], target_IDs[column])
 				if mismatch_count==0:
-					print("There were no mismatches in samples " + sample_names[0] + " and " + sample_names[1] + "\n")
+					print(f"There were no mismatches in samples {sample_names[0]} and {sample_names[1]} \n")
 				else:
 					print("\n")
 
 
 
 	def run(self):
-		# self.parentage_hits()
 		self.find_mismatches(self.parentage_hits())
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Cervus_filter", formatter_class=argparse.RawTextHelpFormatter, add_help=False)
@@ -94,14 +99,16 @@ def main():
 	required = parser.add_argument_group('Required Arguments')
 
 	required.add_argument('-c', '--csv', type=str, required=True, help="Output of Cervus in csv format")
-	required.add_argument('-g', '--genotype', type=str, required=True, help="Output of Ion Torrent in csv format")
+	required.add_argument('-g', '--genotype', type=str, required=True, help="input of Cervus (output of Cervus_parse)")
+	required.add_argument('-s', '--ion_torrent', type=str, required=True, help="Output of Ion Torrent in csv format")
 	optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
 	
 	args=parser.parse_args()
 	csv_input=args.csv
 	genotype_input=args.genotype
+	IT_input=args.ion_torrent
 	
-	job=Cervus_filter(csv_input, genotype_input)
+	job=Cervus_filter(csv_input, genotype_input, IT_input)
 	job.run()
 
 

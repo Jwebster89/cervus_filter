@@ -46,7 +46,7 @@ Optional Arguments:
 Required Arguments:
   -c CSV, --csv CSV     Output of Cervus in csv format
   -g GENOTYPE, --genotype GENOTYPE
-                        input of Cervus (output of Cervus_parse)
+                        input of Cervus (output of Cervus_parse) in csv format
   -s ION_TORRENT, --ion_torrent ION_TORRENT
-                        Output of Ion Torrent in xls format
+                        Output of Ion Torrent in tsv format
 ```

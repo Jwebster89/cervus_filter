@@ -5,16 +5,18 @@ import sys
 import csv
 import argparse
 import itertools
+from pandas import read_excel
 
 
 class Cervus_filter():
-	def __init__(self, cervus, genotypes,IT):
+	def __init__(self, cervus, genotypes,IT, mismatch,lod_filt):
 		self.cervus = cervus
 		self.genotypes = genotypes
 		self.IT = IT
+		self.mismatch=mismatch
+		self.lod_filt=lod_filt
 	
-	
-	def parentage_hits(self):
+	def parentage_hits(self,mismatch,lod_filt):
 		ParentPairs=[]
 		with open(self.cervus) as cervus_input:
 			csv_reader=csv.reader(cervus_input,delimiter=',')
@@ -24,15 +26,26 @@ class Cervus_filter():
 				lod=float(row[6])
 				loci2=int(row[12])
 				lod2=float(row[13])
-				if loci < 4 and lod > 0 :
-					pair=[row[0],row[2]]
-					ParentPairs.append(pair)
-				if loci2 < 4 and lod2 > 0 :
-					pair2=[row[0],row[9]]
-					ParentPairs.append(pair2)
+				if lod_filt:
+					if loci < mismatch+1:
+						pair=[row[0],row[2]]
+						ParentPairs.append(pair)
+					if loci2 < mismatch+1:
+						pair2=[row[0],row[9]]
+						ParentPairs.append(pair2)
+				else:
+					if loci < mismatch+1 and lod > 0 :
+						pair=[row[0],row[2]]
+						ParentPairs.append(pair)
+					if loci2 < mismatch+1 and lod2 > 0 :
+						pair2=[row[0],row[9]]
+						ParentPairs.append(pair2)
 		uniq_pairs=list(ParentPairs for ParentPairs,_ in itertools.groupby(ParentPairs))
 		for pair in uniq_pairs:
-			print(f"Offspring {pair[0]} and Parent {pair[1]} have a positive LOD score and 3 or less mismatches")
+			if lod_filt:
+				print(f"Offspring {pair[0]} and Parent {pair[1]} have {mismatch} or less mismatches")
+			else:
+				print(f"Offspring {pair[0]} and Parent {pair[1]} have a positive LOD score and {mismatch} or less mismatches")
 		print('\n\n')
 		ParentPairs.sort()
 		return(list(ParentPairs for ParentPairs,_ in itertools.groupby(ParentPairs))) # Returns a list of lists of parent/progeny with duplicates removed
@@ -43,8 +56,8 @@ class Cervus_filter():
 			for row in tsv_reader:
 				# (qual, cov)= row[7], row[18] if all(row[-5] == sample_id, row[2] == position):
 				if all([row[-5] == sample_id, str(row[1]) == str(position)]):
-					(qual, cov)= row[7], row[18]
-					print(f"Coverage = {cov} and Quality = {qual} for target {position} in sample {sample_id}")
+					(qual, cov, freq)= row[7], row[18], row[6]
+					print(f"Coverage = {cov} and Quality = {qual} for target {position} in sample {sample_id}. Allele Frequency = {freq}")
 
 	def find_mismatches(self,parentage):
 		with open(self.genotypes) as csv_input:
@@ -82,14 +95,14 @@ class Cervus_filter():
 						self.print_qual_cov(sample_names[0],target_IDs[column])
 						self.print_qual_cov(sample_names[1], target_IDs[column])
 				if mismatch_count==0:
-					print(f"There were no mismatches in samples {sample_names[0]} and {sample_names[1]} \n")
+					print(f"There were no mismatches in samples {sample_names[0]} and {sample_names[1]} \n\n")
 				else:
 					print("\n")
 
 
 
 	def run(self):
-		self.find_mismatches(self.parentage_hits())
+		self.find_mismatches(self.parentage_hits(self.mismatch,self.lod_filt))
 
 
 def main():
@@ -98,16 +111,20 @@ def main():
 	required = parser.add_argument_group('Required Arguments')
 
 	required.add_argument('-c', '--csv', type=str, required=True, help="Output of Cervus in csv format")
-	required.add_argument('-g', '--genotype', type=str, required=True, help="input of Cervus (output of Cervus_parse) in csv format")
-	required.add_argument('-s', '--ion_torrent', type=str, required=True, help="Output of Ion Torrent in tsv format")
+	required.add_argument('-g', '--genotype', type=str, required=True, help="input of Cervus (output of Cervus_parse)")
+	required.add_argument('-s', '--ion_torrent', type=str, required=True, help="Output of Ion Torrent in csv format")
+	optional.add_argument('-m', '--mismatch',type=int, required=False, default=3,help="Number of mismatches in targets to allow. Default 3")
+	optional.add_argument('-i', '--ignore_lod', action='store_true',help="Do not filter results based on LOD")
 	optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
 	
 	args=parser.parse_args()
 	csv_input=args.csv
 	genotype_input=args.genotype
 	IT_input=args.ion_torrent
+	mismatch=args.mismatch
+	lod_filt=args.ignore_lod
 	
-	job=Cervus_filter(csv_input, genotype_input, IT_input)
+	job=Cervus_filter(csv_input, genotype_input, IT_input, mismatch,lod_filt)
 	job.run()
 
 
